@@ -1,185 +1,253 @@
-📘 Perovskite Band Gap Prediction (ML Researchthon Project)
+# 🔬 Perovskite Band Gap Studio  
+### Streamlit-Based ABX₃ Band Gap Predictor
 
-This project builds a Machine Learning framework to quickly screen perovskite materials by estimating their band gaps using elemental features like:
+This project implements a **machine-learning framework** to rapidly estimate the **band gaps of perovskite-like ABX₃ compounds** using simple elemental descriptors. The aim is to support **fast virtual screening** of candidate materials before expensive experiments or full DFT workflows.
 
-Electronegativity (EN)
+The final prototype is a **Streamlit web app** with:
 
-Ionic Radius (IR)
+- Formula-based prediction (`ABX₃` mode)  
+- Descriptor-based prediction (advanced mode)  
+- Batch prediction for multiple formulas  
+- Model insight visualizations (feature importance + predicted vs actual plots)
 
-Atomic Number (Z)
+---
 
-The goal is to help researchers identify high-efficiency perovskite solar cell candidates faster than traditional lab experiments.
+## 🚀 Key Features
 
-🚀 Features
-✔ Predict band gap directly from chemical formula
+### 1. ABX₃ Formula Mode
+- Input: a single perovskite-like **ABX₃ formula** (e.g. `CsPbI3`, `BaTiO3`, `CsPbBr3`)
+- The app:
+  - Validates ABX₃ structure (A, B, X with subscript 3)
+  - Parses the formula into elemental components
+  - Computes averaged:
+    - Electronegativity  
+    - Ionic radius  
+    - Atomic number  
+  - Predicts the band gap (eV) using the trained model
+  - Provides:
+    - A qualitative interpretation of the band gap
+    - A rough “solar suitability” tag (ideal / borderline / unfavourable)
 
-Example inputs:
+---
 
-CsPbI3
-BaTiO3
-CsPbBr3
+### 2. Descriptor Mode (Advanced)
+- Input: directly specify descriptor values:
+  - Average electronegativity  
+  - Average ionic radius (Å)  
+  - Average atomic number  
+- Useful for:
+  - Exploring hypothetical compositions
+  - Sensitivity analysis over descriptor space
+  - Understanding model trends without committing to a specific formula
 
+---
 
-The app automatically:
+### 3. Batch Formula Mode
+- Input: multiple formulas separated by **commas** or **new lines**
+- The app:
+  - Filters valid ABX₃ formulas
+  - Predicts band gaps for each valid entry
+  - Assigns solar suitability tags
+  - Displays a table with:
+    - Formula  
+    - Descriptors  
+    - Predicted band gap (eV)  
+    - Qualitative assessment
 
-Parses the formula
+---
 
-Extracts EN, IR, Z for each element
+### 4. Model Insights
+- Visualizations (stored under `results/`):
+  - `feature_importance.png`  
+    - Ranking of descriptor importance for the model  
+  - `pred_vs_actual_band_style.png` (or `pred_vs_actual.png`)  
+    - Predicted vs actual band gaps, shown as:
+      - Scatter plot, and/or  
+      - Band-style sorted curve
 
-Computes averaged features
+These plots are generated automatically when training the model.
 
-Predicts the material’s band gap using a trained ML model
+---
 
-✔ Trains on 5000+ synthetic perovskite-like samples
+## 🧠 Methodology
 
-You can scale up to 10k–15k rows if needed.
+### Dataset
 
-✔ Full ML workflow
+- Synthetic dataset with **60,000 samples**, stored as:
+  - `data/perovskite_bandgap_60000rows.csv`
+- Columns:
+  - `Electronegativity`
+  - `IonicRadius`
+  - `AtomicNumber`
+  - `BandGap`
+- Band gaps are generated using a **physically inspired non-linear function** with added noise, ensuring:
+  - Anti-correlation with electronegativity and atomic number  
+  - Positive correlation with ionic radius  
+  - Values clipped to a realistic range (e.g. ~0.5–4.0 eV)
 
-Dataset creation
+The dataset is **synthetic**, designed to approximate plausible perovskite-like trends for demonstration and prototyping.
 
-Training (RandomForest)
+### Model
 
-Feature importance visualization
+- Algorithm: **RandomForestRegressor** (scikit-learn)
+- Input features:
+  - `Electronegativity`
+  - `IonicRadius`
+  - `AtomicNumber`
+- Target:
+  - `BandGap` (eV)
+- Train/test split (default): 80% train / 20% test
+- Metrics:
+  - MAE (Mean Absolute Error)
+  - RMSE (Root Mean Squared Error)
+  - R² score (coefficient of determination)
 
-Predicted vs actual plots
+Hyperparameters (e.g. `n_estimators`, `max_depth`) can be tuned in `src/train_model.py` to balance:
+- Model size (on disk)
+- Accuracy
+- Hosting / deployment constraints
 
-Streamlit UI
+---
 
-📁 Project Structure
+## 📁 Project Structure
+
+```text
 perovskite-ml-project/
 │
+├── app/
+│   └── app.py                     # Streamlit UI (main application)
+│
+├── src/
+│   ├── train_model.py             # Training script (uses 60k dataset)
+│   └── utils.py                   # Formula parsing, ABX₃ validation, helpers
+│
 ├── data/
-│   └── perovskite_bandgap_5000rows.csv
+│   └── perovskite_bandgap_60000rows.csv   # Synthetic descriptor + band gap data
 │
 ├── models/
-│   └── model.pkl
+│   └── model.pkl                  # Trained RandomForest model
 │
 ├── results/
 │   ├── feature_importance.png
-│   └── pred_vs_actual.png
+│   ├── pred_vs_actual.png
+│   └── pred_vs_actual_band_style.png
 │
-├── notebooks/
-│   └── exploratory_analysis.ipynb   (optional but recommended)
+├── website/                       # (Optional) Static front-end site, if used
+│   ├── index.html
+│   └── style.css
 │
-├── src/
-│   ├── utils.py
-│   └── train_model.py
-│
-└── app/
-    └── app.py
+├── requirements.txt               # Python dependencies
+└── README.md                      # Project documentation
+⚙️ Installation & Setup
+1. Create and activate a virtual environment (recommended)
+cd perovskite-ml-project
 
-⚙️ How to Train the Model
+# Example using venv:
+python -m venv .venv
+source .venv/bin/activate      # On Windows: .venv\Scripts\activate
 
-Place your dataset in /data/
+2. Install dependencies
+pip install -r requirements.txt
+
+
+requirements.txt should include at least:
+
+streamlit
+pandas
+numpy
+scikit-learn
+matplotlib
+
+🏋️‍♀️ Training / Updating the Model
+
+If you modify the dataset or want to retrain:
+
+Make sure data/perovskite_bandgap_60000rows.csv exists.
 
 Run:
 
-cd src
-python train_model.py
+python src/train_model.py
 
 
 This will:
 
-Train RandomForest on 5000 rows
+Load the 60k dataset
 
-Save a new model.pkl
+Train RandomForestRegressor
 
-Update plots inside /results/
+Evaluate on a held-out test split (prints MAE, RMSE, R²)
 
-Print MAE + R² score
+Save the model to:
 
-🌐 Running the Streamlit App
+models/model.pkl
 
-From project root:
+Regenerate plots in:
+
+results/feature_importance.png
+
+results/pred_vs_actual.png
+
+results/pred_vs_actual_band_style.png
+
+The Streamlit app will automatically use the latest models/model.pkl.
+
+▶️ Running the Streamlit App
+
+From the project root:
 
 streamlit run app/app.py
 
 
-Then open the browser and enter formulas like:
+Streamlit will launch the app in your browser, typically at:
 
-CsPbI3
-BaTiO3
-CsSnBr3
+http://localhost:8501
 
 
-The app will show:
+You can then:
 
-Parsed features
+Use Single Formula Mode for an individual ABX₃ composition
 
-Predicted band gap
+Use Descriptor Mode to explore feature space directly
 
-Error messages for unsupported elements
+Use Batch Mode to screen multiple formulas at once
 
-🔬 How Formula Prediction Works
+Explore Model Insights to understand what the ML model has learned
 
-Example:
-Input = CsPbI3
+📌 Notes & Limitations
 
-The parser extracts elements:
+The current dataset is synthetic, intended for:
 
-Cs
+Method demonstration
 
-Pb
+Prototyping
 
-I (×3)
+UI/UX and workflow validation
 
-For each element, it looks up:
+For real scientific deployment, the model should be retrained on:
 
-Electronegativity (EN)
+High-quality DFT-calculated or experimentally reported perovskite band gaps
 
-Ionic Radius (IR)
+Extended descriptor sets (e.g. tolerance factor, octahedral factor, etc.)
 
-Atomic Number (Z)
+The solar suitability tags are heuristic and should be treated as rough screening guidance, not final device design advice.
 
-Computes the average:
+🏆 Credits
 
-Electronegativity_avg
-IonicRadius_avg
-AtomicNumber_avg
+Developed as part of a research-oriented project on:
 
+“Machine Learning–Driven Screening of Perovskite Materials for Band Gap Optimization.”
+BY:
+Prajwal C Pradhan
+Malavika Vinod
+Mumukka Sanjana Reddy
+Namgay D Wangchuk
+Guided By:
+Dr. Yesheanth Kumar
 
-Feeds into the ML model → predicts band gap.
+The codebase, dataset, and app structure are intended as a foundation that can be extended with:
 
-📊 Visual Outputs (Auto Generated)
+Real materials datasets
 
-The training script creates:
+Additional stability / formation energy predictors
 
-feature_importance.png
-
-pred_vs_actual.png
-
-These appear inside results/ every time you run:
-
-python train_model.py
-
-🧠 Model Used
-
-RandomForestRegressor
-
-n_estimators = 800
-
-n_jobs = -1
-
-Works well with tabular scientific data
-
-Stable results with large datasets
-
-🔍 Future Improvements
-
-Add support for organic perovskites (MA, FA)
-
-Add XGBoost version
-
-Add SHAP explainability
-
-Add larger elemental database
-
-Add CSV batch prediction mode
-
-📝 Author
-
-Developed as part of Rezonix Researchthon Project
-BY GROUP ATOMIC ALLIANCE
-Machine Learning contribution:
-Dataset creation, model training, formula parsing, Streamlit UI.
+Multi-objective screening workflows for perovskite solar cells.
