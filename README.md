@@ -242,7 +242,7 @@ Malavika Vinod
 Mumukka Sanjana Reddy
 Namgay D Wangchuk
 Guided By:
-Dr. Yesheanth Kumar
+Dr. Yeshwanth Kumar
 
 The codebase, dataset, and app structure are intended as a foundation that can be extended with:
 
